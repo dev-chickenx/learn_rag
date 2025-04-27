@@ -1,0 +1,20 @@
+[project]
+name = "rag-sandbox"
+version = "0.1.0"
+description = "RAG Sandbox for learning"
+authors = [
+    {name = "k-nakatsuji"}
+]
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "openai (>=1.76.0,<2.0.0)",
+    "faiss-cpu (>=1.10.0,<2.0.0)",
+    "tiktoken (>=0.9.0,<0.10.0)",
+    "python-dotenv (>=1.1.0,<2.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
