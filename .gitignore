@@ -28,8 +28,8 @@ venv/
 ENV/
 .python-version
 
-# Poetry
-poetry.lock
+# # Poetry
+# poetry.lock
 
 # VSCode
 .vscode/
