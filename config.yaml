@@ -1,5 +1,4 @@
 # RAGシステム設定ファイル
-# このファイルを config.yaml としてコピーし、必要に応じて値を変更してください
 
 # 埋め込みに使用するモデル
 embedding_model: text-embedding-3-small
