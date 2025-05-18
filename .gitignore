@@ -40,3 +40,7 @@ ENV/
 # Logs
 logs/
 *.log
+
+# Embeddings cache
+cache/*
+!/cache/.gitkeep
