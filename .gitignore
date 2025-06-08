@@ -39,5 +39,5 @@ logs/
 *.log
 
 # Embeddings cache
-cache/*
-!/cache/.gitkeep
+.cache/*
+!/.cache/.gitkeep

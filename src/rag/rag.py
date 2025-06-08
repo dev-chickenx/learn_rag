@@ -235,7 +235,7 @@ class RAG:
             chunks (list): List of relevant chunks
 
         Returns:
-            dict: Generated response and token statistics
+            dict: Generated response, token statistics, and source references
         """
         # Reset token counters for this generation
         self.completion_counter.reset_totals()
@@ -248,21 +248,29 @@ class RAG:
             ]
             cached_response = self.cache_manager.get_response(query, chunks_info)
             if cached_response:
-                return {"response": cached_response, "token_stats": {"cached": True}}
+                return {
+                    "response": cached_response,
+                    "token_stats": {"cached": True},
+                    "sources": [],  # キャッシュからの応答は現状ソース情報を持っていない
+                }
 
         # Build system prompt
         system_prompt = """あなたは提供された情報に基づいて質問に回答するアシスタントです。以下のガイドラインに従ってください：
 
 1. 提供された情報のみを使用して回答を生成してください
 2. 情報が不十分な場合は、その旨を正直に伝えてください
-3. 回答には必ず参照した情報源を明記してください
+3. 回答の中で情報を引用する際は、[情報源X]の形式で引用してください
 4. 確信が持てない場合は、その不確実性を明確に伝えてください
-5. 回答は簡潔かつ正確を心がけてください"""
+5. 回答は簡潔かつ正確を心がけてください
+6. 回答の最後に、使用した情報源の一覧を箇条書きで記載してください"""
 
         self.completion_counter.add_to_total(system_prompt)
 
         # Build context prompt
         context_prompt = "以下の情報源を参考に回答を生成してください：\n\n"
+
+        # Track sources for reference
+        sources = []
 
         for i, chunk in enumerate(chunks, 1):
             doc_name = chunk["metadata"]["doc_name"]
@@ -270,7 +278,19 @@ class RAG:
             total_chunks = chunk["metadata"]["total_chunks"]
             similarity = 1 - chunk["distance"]  # Convert distance to similarity score
 
-            context_section = f"[情報源 {i}] {doc_name} (チャンク {chunk_idx + 1}/{total_chunks}, 関連度: {similarity:.2%})\n"
+            # Store source information
+            sources.append(
+                {
+                    "id": i,
+                    "file": doc_name,
+                    "chunk": chunk_idx + 1,
+                    "total_chunks": total_chunks,
+                    "similarity": similarity,
+                    "content": chunk["content"].strip(),
+                }
+            )
+
+            context_section = f"[情報源{i}] {doc_name} (チャンク {chunk_idx + 1}/{total_chunks}, 関連度: {similarity:.2%})\n"
             context_section += f"{chunk['content'].strip()}\n\n"
             context_prompt += context_section
 
@@ -282,7 +302,7 @@ class RAG:
 
         # Generate response
         response = self.client.chat.completions.create(
-            model=self.config["completion_model"],
+            model=self.config.get("completion_model", "gpt-4"),  # デフォルトはgpt-4
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
@@ -301,4 +321,4 @@ class RAG:
         if self.cache_manager:
             self.cache_manager.save_response(query, chunks_info, answer)
 
-        return {"response": answer, "token_stats": token_stats}
+        return {"response": answer, "token_stats": token_stats, "sources": sources}

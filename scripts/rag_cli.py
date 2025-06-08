@@ -36,7 +36,7 @@ def load_config(config_path):
         "chunk_overlap": 50,
         "top_k": 3,
         "docs_dir": "docs",
-        "cache_dir": "cache",
+        "cache_dir": ".cache",
         "use_cache": True,
     }
 
