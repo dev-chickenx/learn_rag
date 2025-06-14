@@ -1,4 +1,4 @@
-"""Integration tests for RAG implementation.
+"""RAG実装の統合テスト。
 
 Note: これらのテストはOpenAI APIを実際に呼び出すため、コストが発生します。
 実行する場合は、環境変数 RUN_INTEGRATION_TESTS=1 を設定してください。
