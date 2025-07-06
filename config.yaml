@@ -5,6 +5,7 @@ openai_api_key: ${OPENAI_API_KEY}  # 環境変数から読み込み
 
 # モデル設定
 completion_model: "gpt-3.5-turbo"  # コスト効率の良いモデルを使用
+# completion_model: "gpt-4o-mini"  # 学習計画2-2用のモデル
 embedding_model: "text-embedding-3-small"
 
 # チャンク設定

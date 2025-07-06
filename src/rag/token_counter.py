@@ -15,6 +15,10 @@ class TokenCounter:
             "input": 0.03,  # $0.03 / 1K tokens
             "output": 0.06,  # $0.06 / 1K tokens
         },
+        "gpt-4o-mini": {
+            "input": 0.00015,  # $0.15 / 1M tokens = $0.00015 / 1K tokens
+            "output": 0.0006,  # $0.60 / 1M tokens = $0.0006 / 1K tokens
+        },
         "text-embedding-3-small": {
             "input": 0.00002,  # $0.00002 / 1K tokens
             "output": 0.00002,  # $0.00002 / 1K tokens
