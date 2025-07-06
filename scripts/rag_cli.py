@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Command-line interface for the RAG system."""
 
 import argparse
@@ -6,6 +7,7 @@ from pathlib import Path
 
 import yaml
 from dotenv import load_dotenv
+from src.rag.cost_manager import CostManager
 from src.rag.rag import RAG
 
 
@@ -38,6 +40,10 @@ def load_config(config_path):
         "docs_dir": "docs",
         "cache_dir": ".cache",
         "use_cache": True,
+        # Cost management defaults
+        "cost_limit_per_query": 0.10,
+        "cost_limit_session": 1.00,
+        "cost_warning_threshold": 0.05,
     }
 
     # Load YAML config if exists
@@ -91,6 +97,9 @@ def main():
     # Initialize RAG
     rag = RAG(config)
 
+    # Initialize cost manager
+    cost_manager = CostManager(config)
+
     # Load documents
     print("ドキュメントを読み込んでいます...")
     rag.load_documents()
@@ -100,25 +109,72 @@ def main():
     rag.create_index()
 
     # Interactive loop
-    print("\n質問を入力してください（終了するには 'q' または 'quit' と入力）:")
+    print("\n質問を入力してください:")
+    print("  - 終了: 'q' または 'quit'")
+    print("  - セッション情報: 'cost' または 'summary'")
+    print("  - コスト確認なし: 'skip:' で始まる質問")
+
     while True:
         query = input("\n質問 > ").strip()
 
         if query.lower() in ["q", "quit", "exit"]:
+            # Show session summary before exit
+            cost_manager.print_session_summary()
             break
+
+        if query.lower() in ["cost", "summary", "コスト", "サマリー"]:
+            cost_manager.print_session_summary()
+            continue
 
         if not query:
             continue
 
+        # Check if cost check should be skipped
+        skip_cost_check = False
+        if query.lower().startswith("skip:"):
+            skip_cost_check = True
+            query = query[5:].strip()  # Remove "skip:" prefix
+            if not query:
+                print("質問が空です。")
+                continue
+
         # Retrieve relevant chunks
         chunks = rag.retrieve_relevant_chunks(query)
+
+        # Cost estimation and confirmation (unless skipped)
+        if not skip_cost_check:
+            cost_breakdown = cost_manager.estimate_query_cost(query, chunks)
+            estimated_cost = cost_breakdown["total_cost"]
+
+            # Check cost limits
+            should_proceed, warning_message = cost_manager.check_cost_limits(
+                estimated_cost
+            )
+
+            if not should_proceed:
+                print(warning_message)
+                if not cost_manager.prompt_user_confirmation(
+                    estimated_cost, cost_breakdown
+                ):
+                    print("クエリがキャンセルされました。")
+                    continue
+            elif warning_message:  # Warning threshold exceeded
+                print(f"\n{warning_message}")
 
         # Generate response
         response = rag.generate_response(query, chunks)
 
         # Print response
         print("\n回答:")
-        print(response)
+        print(response["response"])
+
+        # Print cost information
+        token_stats = response.get("token_stats", {})
+        if "total_cost_usd" in token_stats and not skip_cost_check:
+            actual_cost = token_stats["total_cost_usd"]
+            cost_manager.record_actual_cost(actual_cost)
+            print(f"\n💰 実際のコスト: ${actual_cost:.6f}")
+            print(f"📊 セッション累計: ${cost_manager.session_cost:.6f}")
 
         # Print sources
         print("\n情報源:")

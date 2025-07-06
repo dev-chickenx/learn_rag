@@ -21,3 +21,8 @@ cache_dir: ".cache"
 
 # ドキュメント設定
 docs_dir: "docs"
+
+# コスト制限設定 (USD)
+cost_limit_per_query: 0.10      # 1クエリあたりの上限
+cost_limit_session: 1.00        # セッション全体の上限
+cost_warning_threshold: 0.05    # 警告を表示する閾値
